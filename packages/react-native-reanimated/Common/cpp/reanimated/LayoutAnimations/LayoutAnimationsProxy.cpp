@@ -693,6 +693,9 @@ void LayoutAnimationsProxy::applyInitialMutationsToLightTree(const ShadowViewMut
       }
       case ShadowViewMutation::Delete: {
         lightNodes_.erase(mutation.oldChildShadowView.tag);
+        if constexpr (StaticFeatureFlags::getFlag("ENABLE_SHARED_ELEMENT_TRANSITIONS")) {
+          unmappedTags_.push_back(mutation.oldChildShadowView.tag);
+        }
         break;
       }
       case ShadowViewMutation::Insert: {
