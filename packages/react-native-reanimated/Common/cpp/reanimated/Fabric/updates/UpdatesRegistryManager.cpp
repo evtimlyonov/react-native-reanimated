@@ -23,8 +23,11 @@ UpdatesRegistryManager::ScopedLock::~ScopedLock() {
 
 UpdatesRegistryManager::UpdatesRegistryManager(
     const std::shared_ptr<StaticPropsRegistry> &staticPropsRegistry,
-    const std::shared_ptr<MountedRootsRegistry> &mountedRootsRegistry)
-    : staticPropsRegistry_(staticPropsRegistry), mountedRootsRegistry_(mountedRootsRegistry) {}
+    const std::shared_ptr<MountedRootsRegistry> &mountedRootsRegistry,
+    const std::shared_ptr<LayoutAnimationsManager> &layoutAnimationsManager)
+    : staticPropsRegistry_(staticPropsRegistry),
+      mountedRootsRegistry_(mountedRootsRegistry),
+      layoutAnimationsManager_(layoutAnimationsManager) {}
 
 UpdatesRegistryManager::ScopedLock UpdatesRegistryManager::lock() const {
   return ScopedLock{mutex_};
@@ -83,6 +86,7 @@ void UpdatesRegistryManager::unmarkNodeAsRemovable(Tag viewTag) {
 void UpdatesRegistryManager::handleNodeRemovals() {
   react_native_assert(isLockedByCurrentThread());
   RemovableShadowNodes remainingShadowNodes;
+  std::vector<Tag> removedTags;
 
   for (const auto &[tag, shadowNodeFamily] : removableShadowNodes_) {
     if (!shadowNodeFamily) {
@@ -98,9 +102,16 @@ void UpdatesRegistryManager::handleNodeRemovals() {
       registry->removeUnmounted(shadowNodeFamily);
     }
     staticPropsRegistry_->remove(tag);
+    removedTags.push_back(tag);
   }
 
   removableShadowNodes_ = std::move(remainingShadowNodes);
+  // Only after the mount: the pull that deletes a shared transition source still reads its config.
+  if constexpr (StaticFeatureFlags::getFlag("ENABLE_SHARED_ELEMENT_TRANSITIONS")) {
+    if (!removedTags.empty()) {
+      layoutAnimationsManager_->clearSharedTransitionConfigs(removedTags);
+    }
+  }
 }
 
 PropsMap UpdatesRegistryManager::collectProps() {

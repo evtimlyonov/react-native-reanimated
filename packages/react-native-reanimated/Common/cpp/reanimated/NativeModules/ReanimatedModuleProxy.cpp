@@ -176,7 +176,10 @@ ReanimatedModuleProxy::ReanimatedModuleProxy(
 #endif
       staticPropsRegistry_(std::make_shared<StaticPropsRegistry>()),
       mountedRootsRegistry_(std::make_shared<MountedRootsRegistry>()),
-      updatesRegistryManager_(std::make_shared<UpdatesRegistryManager>(staticPropsRegistry_, mountedRootsRegistry_)),
+      updatesRegistryManager_(std::make_shared<UpdatesRegistryManager>(
+          staticPropsRegistry_,
+          mountedRootsRegistry_,
+          layoutAnimationsManager_)),
       operationsLoop_(std::make_shared<OperationsLoop>(
           uiScheduler,
           platformDepMethodsHolder.requestRender,

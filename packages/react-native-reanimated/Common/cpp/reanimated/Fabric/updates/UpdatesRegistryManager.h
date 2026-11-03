@@ -6,6 +6,7 @@
 #include <reanimated/Fabric/MountedRootsRegistry.h>
 #include <reanimated/Fabric/ShadowTreeCloner.h>
 #include <reanimated/Fabric/updates/UpdatesRegistry.h>
+#include <reanimated/LayoutAnimations/LayoutAnimationsManager.h>
 
 #include <atomic>
 #include <memory>
@@ -30,7 +31,8 @@ class UpdatesRegistryManager {
 
   UpdatesRegistryManager(
       const std::shared_ptr<StaticPropsRegistry> &staticPropsRegistry,
-      const std::shared_ptr<MountedRootsRegistry> &mountedRootsRegistry);
+      const std::shared_ptr<MountedRootsRegistry> &mountedRootsRegistry,
+      const std::shared_ptr<LayoutAnimationsManager> &layoutAnimationsManager);
 
   ScopedLock lock() const;
   static bool isLockedByCurrentThread();
@@ -72,6 +74,7 @@ class UpdatesRegistryManager {
   std::vector<std::shared_ptr<UpdatesRegistry>> registries_;
   const std::shared_ptr<StaticPropsRegistry> staticPropsRegistry_;
   const std::shared_ptr<MountedRootsRegistry> mountedRootsRegistry_;
+  const std::shared_ptr<LayoutAnimationsManager> layoutAnimationsManager_;
 
 #ifdef ANDROID
   PropsToRevertMap propsToRevertMap_;
