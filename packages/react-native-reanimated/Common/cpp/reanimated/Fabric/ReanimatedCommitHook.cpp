@@ -54,21 +54,22 @@ RootShadowNode::Unshared ReanimatedCommitHook::shadowTreeWillCommit(
     proxy->shadowTreeWillCommit(newRootShadowNode->getChildren().empty());
   }
 
-  if constexpr (StaticFeatureFlags::getFlag("USE_ANIMATION_BACKEND")) {
-    return newRootShadowNode;
-  }
-
   {
     auto lock = updatesRegistryManager_->lock();
     if (newRootShadowNode->getChildren().empty()) {
       // A stopping surface commits an empty root; its mount is not reported on a paused Android host.
       mountedRootsRegistry_->remove(shadowTree.getSurfaceId());
+      updatesRegistryManager_->handleNodeRemovals(shadowTree.getSurfaceId());
       if (synchronousWritesTracker_) {
         synchronousWritesTracker_->onSurfaceStop(shadowTree.getSurfaceId());
       }
     } else {
       mountedRootsRegistry_->registerSurface(shadowTree.getSurfaceId());
     }
+  }
+
+  if constexpr (StaticFeatureFlags::getFlag("USE_ANIMATION_BACKEND")) {
+    return newRootShadowNode;
   }
 
   auto reaShadowNode = std::reinterpret_pointer_cast<ReanimatedCommitShadowNode>(newRootShadowNode);

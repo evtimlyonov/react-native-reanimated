@@ -33,7 +33,9 @@ void ReanimatedMountHook::shadowTreeDidMount(
   ReanimatedSystraceSection s("ReanimatedMountHook::shadowTreeDidMount");
 
   if constexpr (StaticFeatureFlags::getFlag("USE_ANIMATION_BACKEND")) {
-    // With the animation backend this hook only tracks surface unmounts.
+    auto lock = updatesRegistryManager_->lock();
+    mountedRootsRegistry_->set(rootShadowNode);
+    updatesRegistryManager_->handleNodeRemovals(rootShadowNode->getSurfaceId());
     return;
   }
 
@@ -53,7 +55,7 @@ void ReanimatedMountHook::shadowTreeDidMount(
     // animations run every mount carries the mount trait, so returning early here
     // would skip removals for the whole animation and leak unmounted nodes if the
     // tree is torn down mid-animation.
-    updatesRegistryManager_->handleNodeRemovals();
+    updatesRegistryManager_->handleNodeRemovals(rootShadowNode->getSurfaceId());
 
     if (!isReanimatedMount) {
       // When a commit from React Native has finished, we reset the skip commit
